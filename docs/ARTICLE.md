@@ -917,7 +917,9 @@ The companion demo app (included in this project) demonstrates all of the above 
 
 5. **Secret Storage** — EncryptedSharedPreferences for storing tokens, passwords, and API keys. CRUD operations with a visual list of stored secrets.
 
-6. **Key Inspector** — Lists all Keystore keys with their algorithm, size, hardware-backing status, and authentication requirements (auth mode, timeout, biometric/credential flags).
+6. **Key Attestation** — Generates a P-256 key with `setAttestationChallenge()`, retrieves the Google-signed certificate chain (5 certs on our test device: leaf → TEE batch → Droid CA3 → Droid CA2 → Key Attestation CA1 root), signs data and verifies using the certificate's public key, validates the chain signatures, and shows the attestation extension (OID 1.3.6.1.4.1.11129.2.1.17). Proved on real hardware that attestation is FREE, offline, and requires no Play Integrity API.
+
+7. **Key Inspector** — Lists all Keystore keys with their algorithm, size, hardware-backing status, and authentication requirements (auth mode, timeout, biometric/credential flags).
 
 ### Build & Deploy
 

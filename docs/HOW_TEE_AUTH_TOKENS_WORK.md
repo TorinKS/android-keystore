@@ -8,7 +8,7 @@ Every time you scan your fingerprint, the **Biometric TA inside the TEE** verifi
 
 ## What Is the TEE?
 
-Your phone has **two separate computers** running independently:
+Your phone's CPU runs in **two isolated worlds** simultaneously:
 
 ```mermaid
 graph TB

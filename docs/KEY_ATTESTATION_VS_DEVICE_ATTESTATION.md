@@ -112,8 +112,8 @@ sequenceDiagram
 
     App->>KS: KeyGenParameterSpec.Builder("my_key")<br/>.setAttestationChallenge(challenge)<br/>.build()
     KS->>KS: Generate P-256 key pair inside TEE
-    KS->>KS: Create certificate chain:<br/>leaf cert (with attestation extension)<br/>+ intermediate cert<br/>+ root cert (Google's CA)
-    KS-->>App: Certificate chain (3-4 certs)
+    KS->>KS: Create certificate chain:<br/>leaf (attestation ext) → TEE batch key<br/>→ Google intermediates → Root (Google CA)
+    KS-->>App: Certificate chain (3-5 certs, typically 5 on RKP devices)
 
     App->>Server: Send certificate chain (DER/PEM encoded)
 

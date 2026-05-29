@@ -8,37 +8,42 @@ When you call `setAttestationChallenge()` and `getCertificateChain()`, the TEE p
 
 ## How the Certificate Chain Is Formed
 
-The chain has **3-4 certificates**. Each level is controlled by a different entity:
+The chain length **varies by device and provisioning method**. On our test device (Moto G86 5G, Android 16, RKP-provisioned), the chain had **5 certificates**:
 
 ```mermaid
 graph TD
-    subgraph chain["Attestation Certificate Chain"]
-        LEAF["Certificate 1 — LEAF<br/><b>Created by the TEE at key generation time</b><br/><br/>Contains YOUR key's public key<br/>+ attestation extension (security level,<br/>auth required, OS version, etc.)<br/><br/>Signed by: batch attestation key"]
+    subgraph chain["Attestation Certificate Chain — Real Output from Moto G86 5G"]
+        LEAF["Cert 1 — LEAF<br/><b>CN=Android Keystore Key</b><br/>Created by TEE at key generation<br/>Contains attestation extension<br/>(security level, challenge, key props)"]
 
-        BATCH["Certificate 2 — INTERMEDIATE (Batch Key)<br/><b>Shared across ~100,000+ devices</b><br/><br/>Same key used by a batch of devices<br/>from the same manufacturer/production run<br/>Privacy measure: prevents per-device tracking<br/><br/>Signed by: Google's intermediate CA"]
+        BATCH["Cert 2 — TEE BATCH KEY<br/><b>CN={hash}, O=TEE</b><br/>RKP-provisioned, short-lived (2 weeks)<br/>Shared across device batch<br/>Privacy: prevents per-device tracking"]
 
-        INTER["Certificate 3 — INTERMEDIATE (Google CA)<br/><b>Google's signing infrastructure</b><br/><br/>Bridges batch key to root<br/>May be multiple intermediates"]
+        CA3["Cert 3 — GOOGLE INTERMEDIATE<br/><b>CN=Droid CA3, O=Google LLC</b><br/>~2 month validity<br/>Part of Google's signing chain"]
 
-        ROOT["Certificate 4 — ROOT<br/><b>Google's Attestation Root CA</b><br/><br/>Published at googleapis.com/attestation/root<br/>Your server verifies this matches"]
+        CA2["Cert 4 — GOOGLE INTERMEDIATE<br/><b>CN=Droid CA2, O=Google LLC</b><br/>~3 year validity<br/>Bridges batch key to root"]
+
+        ROOT["Cert 5 — ROOT<br/><b>CN=Key Attestation CA1</b><br/><b>O=Google LLC, OU=Android</b><br/>10 year validity, self-signed<br/>ECDSA P-384 (new 2026 root)"]
     end
 
     LEAF -->|"signed by"| BATCH
-    BATCH -->|"signed by"| INTER
-    INTER -->|"signed by"| ROOT
+    BATCH -->|"signed by"| CA3
+    CA3 -->|"signed by"| CA2
+    CA2 -->|"signed by"| ROOT
 
     style LEAF fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
     style BATCH fill:#fff3e0,stroke:#ef6c00
     style ROOT fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px
 ```
 
+**Note:** Older factory-provisioned devices (pre-Android 12) may have only 3-4 certificates. RKP-provisioned devices (Android 12+) typically have 4-5 with short-lived intermediates that rotate automatically.
+
 ### Who Controls What
 
-| Certificate | Created by | When | Unique to |
-|---|---|---|---|
-| **Leaf** | TEE on the device | Each time you call `setAttestationChallenge()` + generate key | This specific key |
-| **Batch intermediate** | Manufacturer | At factory (or via RKP) | ~100,000+ devices in a production batch |
-| **Google intermediate(s)** | Google | During provisioning | Google's infrastructure |
-| **Root** | Google | Once (with rotation in 2026) | All Android devices globally |
+| Certificate | Created by | When | Unique to | Observed on Moto G86 |
+|---|---|---|---|---|
+| **Leaf** | TEE on the device | Each `setAttestationChallenge()` + key generation | This specific key | `CN=Android Keystore Key` |
+| **TEE batch key** | RKP backend (or factory) | Provisioned periodically (2-week validity on RKP) | Batch of devices | `O=TEE`, valid May 21–Jun 4 2026 |
+| **Google intermediate(s)** | Google | During RKP provisioning | Google's infrastructure | `Droid CA3` + `Droid CA2` |
+| **Root** | Google | Once (rotated in 2026) | All Android devices globally | `Key Attestation CA1`, ECDSA P-384 |
 
 ---
 
@@ -235,7 +240,7 @@ sequenceDiagram
     KS-->>App: Key pair created
 
     App->>KS: keyStore.getCertificateChain("fido_key")
-    KS-->>App: [leaf, intermediate, root] certificates
+    KS-->>App: Certificate chain (3-5 certs depending on device)
 
     App->>Server: POST /register/finish<br/>{certificateChain: [cert1, cert2, cert3]}
 

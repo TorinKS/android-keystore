@@ -25,26 +25,35 @@ Key attestation solves this. The **device's TEE** produces a **certificate chain
 
 ## What Is the Attestation Certificate Chain?
 
-When you call `keyStore.getCertificateChain(alias)`, Android returns **3-4 certificates** that form a trust chain:
+When you call `keyStore.getCertificateChain(alias)`, Android returns a chain of certificates. On our Moto G86 5G test device (Android 16, RKP-provisioned), the chain had **5 certificates**:
 
 ```mermaid
 graph TD
-    subgraph chain["Certificate Chain (bottom to top)"]
-        LEAF["Certificate 1 — Leaf<br/><i>Your key's public key</i><br/><br/>Contains attestation extension<br/>with key properties, security level,<br/>OS version, patch level, boot state"]
+    subgraph chain["Attestation Certificate Chain — actual from Moto G86 5G"]
+        LEAF["Cert 1 — LEAF<br/><b>CN=Android Keystore Key</b><br/><i>Your key's public key</i><br/>Contains attestation extension<br/>Signed with SHA256withECDSA"]
 
-        INTERMEDIATE["Certificate 2 — Intermediate<br/><i>Signed by device's batch key</i><br/><br/>May contain provisioning info<br/>Links leaf to root"]
+        BATCH["Cert 2 — TEE BATCH KEY<br/><b>O=TEE</b><br/><i>Short-lived (2 weeks)</i><br/>RKP-provisioned batch key<br/>Signed with SHA256withECDSA"]
 
-        ROOT["Certificate 3 — Root<br/><i>Google's Attestation Root CA</i><br/><br/>Published at googleapis.com<br/>Server compares against known roots"]
+        CA3["Cert 3 — GOOGLE INTERMEDIATE<br/><b>CN=Droid CA3, O=Google LLC</b><br/><i>~2 month validity</i><br/>Signed with SHA384withECDSA"]
+
+        CA2["Cert 4 — GOOGLE INTERMEDIATE<br/><b>CN=Droid CA2, O=Google LLC</b><br/><i>~3 year validity</i><br/>Signed with SHA384withECDSA"]
+
+        ROOT["Cert 5 — ROOT<br/><b>CN=Key Attestation CA1</b><br/><b>O=Google LLC, OU=Android</b><br/><i>10 year validity</i><br/>Self-signed, ECDSA P-384"]
     end
 
-    LEAF -->|"signed by"| INTERMEDIATE
-    INTERMEDIATE -->|"signed by"| ROOT
+    LEAF -->|"signed by"| BATCH
+    BATCH -->|"signed by"| CA3
+    CA3 -->|"signed by"| CA2
+    CA2 -->|"signed by"| ROOT
     ROOT -->|"matches?"| GOOGLE["Google's Published Root Keys<br/>https://android.googleapis.com/<br/>attestation/root"]
 
     style ROOT fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px
     style GOOGLE fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px
     style LEAF fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    style BATCH fill:#fff3e0,stroke:#ef6c00
 ```
+
+**Note:** The number of certificates varies by device and provisioning method. Older factory-provisioned devices may have 3-4 certs. RKP-provisioned devices (Android 12+) typically have 4-5 certs with short-lived intermediates.
 
 **The leaf certificate contains an attestation extension** with detailed information about the key:
 

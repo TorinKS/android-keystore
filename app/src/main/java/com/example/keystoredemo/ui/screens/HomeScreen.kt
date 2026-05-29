@@ -29,6 +29,7 @@ fun HomeScreen(onNavigate: (String) -> Unit) {
         DemoItem("Encrypt / Decrypt", "AES-GCM and RSA encryption using Keystore keys", Icons.Default.Lock, "encrypt"),
         DemoItem("Sign / Verify", "RSA and ECDSA digital signatures", Icons.Default.VerifiedUser, "sign"),
         DemoItem("Secret Storage", "EncryptedSharedPreferences for tokens & passwords", Icons.Default.Security, "secrets"),
+        DemoItem("Key Attestation", "Prove key is hardware-backed via Google CA", Icons.Default.Verified, "attestation"),
         DemoItem("Key Inspector", "List all Keystore keys and their properties", Icons.Default.List, "keys"),
     )
 
