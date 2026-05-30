@@ -40,6 +40,9 @@ class MainActivity : FragmentActivity() {
                         composable("secrets") {
                             SecretStorageScreen(onBack = { navController.popBackStack() })
                         }
+                        composable("e2eflow") {
+                            E2eFlowScreen(onBack = { navController.popBackStack() })
+                        }
                         composable("attestation") {
                             KeyAttestationScreen(onBack = { navController.popBackStack() })
                         }
