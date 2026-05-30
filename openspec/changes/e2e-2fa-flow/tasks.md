@@ -33,4 +33,4 @@
 - [x] 6.1 Document setup instructions: start server, run `adb reverse tcp:8080 tcp:8080`, launch app
 - [x] 6.2 Test enrollment flow on Moto G86 5G — verify server accepts the 5-cert attestation chain
 - [x] 6.3 Test authentication flow — verify server accepts the ECDSA signature
-- [ ] 6.4 Test failure cases: wrong challenge, tampered signature, software-backed key (if testable)
+- [x] 6.4 Test failure cases: wrong challenge, tampered signature, software-backed key (if testable)
